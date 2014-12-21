@@ -1,17 +1,17 @@
 (defn parse-input
   []
-  (vec (map keyword
-         (flatten
-           (map #(re-seq #"Ko|kO|Kudah|kudah|Kukarek|Kud|kud" %) (line-seq (java.io.BufferedReader. *in*)))))))
+  (map keyword
+    (flatten
+      (map #(re-seq #"Ko|kO|Kudah|kudah|Kukarek|Kud|kud" %) (line-seq (java.io.BufferedReader. *in*))))))
 
-(defn make-data
-  [commands current-command input]
-  (if (or (= current-command (count input)) (= (input current-command) :kud ))
-    {:c commands :cc current-command}
-    (if (= (input current-command) :Kud )
-      (let [{:keys [cc c]} (make-data [] (inc current-command) input)]
-        (recur (conj commands c) (inc cc) input))
-      (recur (conj commands (input current-command)) (inc current-command) input))))
+(defn make-commands
+  [commands [current-input :as input]]
+  (if (or (empty? input) (= :kud current-input))
+    {:commands commands :input input}
+    (if (= :Kud current-input)
+      (let [{c :commands i :input} (make-commands [] (rest input))]
+        (recur (conj commands c) (rest i)))
+      (recur (conj commands current-input) (rest input)))))
 
 (defmulti _interpret #(class %2))
 
@@ -36,4 +36,4 @@
     cells-state
     (recur (interpret cells-state command) command)))
 
-(interpret {:cells [0] :current-cell 0} (:c (make-data [] 0 (parse-input))))
+(interpret {:cells [0] :current-cell 0} (:commands (make-commands [] (parse-input))))
